@@ -3,7 +3,6 @@
 #include <cstdlib>
 #include <ios>
 #include <iostream>
-#include "deps/alicenet.hpp"
 #include <nlohmann/json.hpp>
 #include <sstream>
 #include <string>
@@ -34,21 +33,23 @@ string sha256(const string str)
 }
 bool isNumber(const string& str) {
     for (char const &c : str) {
-        if (std::isdigit(c) == 0) return false;
+        if (std::isdigit(c) == 0 && c != '.') return false;
     }
     return true;
 }
 
 void accessloop(json jsonData, string username) {
     while (true) {
-        cout << "\n\n" // flush screen
-        << "what would you like to do today?\n"
-        << "1. deposit\n"
-        << "2. withdraw\n"
-        << "3. commit changes\n";
+        cout << "\033[2J\033[1;1H" // flush screen
+            << "what would you like to do today?\n"
+            << "1. deposit\n"
+            << "2. withdraw\n"
+            << "3. commit changes\n";
+        if (jsonData.contains("money")) 
+            cout << "You have " << jsonData["money"] << " dollars\n";
 
-        ofstream filewrite;
-        string choice = "";
+        ofstream filewrite; 
+        string choice;
         cin >> choice;
         string value;
         
@@ -58,26 +59,26 @@ void accessloop(json jsonData, string username) {
         }
         
         switch (stoi(choice)) {
-            case 1:
+            case 1: // deposit
                 cout << "how much would you like to deposit?\n";
                 cin >> value;
                 if (isNumber(value)) {
                     if (jsonData.contains("money")) {
-                        jsonData["money"] = (int)jsonData["money"] + stoi(value);
+                        jsonData["money"] = (double)jsonData["money"] + stod(value);
                         cout << "you now have " << jsonData["money"] << " dollars\n";
                     } else {
-                        jsonData["money"] = stoi(value);
+                        jsonData["money"] = stod(value);
                     }
                 } else {
                     cout << "invalid number\n";
                 }
                 break;
-            case 2:
-                cout << "how much would you like to deposit?\n";
+            case 2: // withdrawing
+                cout << "how much would you like to withdraw?\n";
                 cin >> value;
                 if (isNumber(value)) {
                     if (jsonData.contains("money")) {
-                        jsonData["money"] = (int)jsonData["money"] - stoi(value);
+                        jsonData["money"] = (double)jsonData["money"] - stod(value);
                         cout << "you now have " << jsonData["money"] << " dollars\n"; 
                     } else {
                         jsonData["money"] = value;
@@ -86,7 +87,7 @@ void accessloop(json jsonData, string username) {
                     cout << "invalid number\n";
                 }
                 break;
-            case 3:
+            case 3: // writing file 
                 filewrite.open(string(string("db/") + username + "/data.json"), ios::trunc);
                 filewrite << jsonData;
                 filewrite.close();
